@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fénix Tickera Cecosesola</title>
+    <!-- Favicon agregado para mostrar el ícono en la pestaña del navegador -->
+    <link rel="icon" href="ico.ico " type="image/x-icon">  
+    <!-- Carga Tailwind CSS para estilos rápidos y responsivos -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.4/dist/xlsx.full.min.js"></script>
+    <!-- Carga Google Fonts para una mejor tipografía -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900;1000&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Definiciones de estilo específicas para impresión */
+        @media print {
+            /* ESTABLECER MÁRGENES DE PÁGINA A LA CONFIGURACIÓN PREDETERMINADA DEL USUARIO (0mm, 6.5mm, 27mm, 0mm) */
+            @page {
+                /* CLAVE CORREGIDA: Intercambiamos a 210mm (ancho) x 80mm (alto) para forzar Paisaje */
+                size: 210mm 80mm; 
+                /* NUEVA CONFIGURACIÓN DE MARGEN PREDETERMINADA: top right bottom left */
+                margin: 2mm 6mm 54.5mm 0mm !important; 
+                /* CLAVE: FORZAR ORIENTACIÓN HORIZONTAL (Landscape) */
+            }
+            
+            /* Ajuste del BODY para mínima separación (simulando 0mm) */
+            body { 
+                /* Padding mínimo, el margen principal se gestiona en @page */
+                padding: 0 !important; 
+            }
+
+            /* Ocultar la interfaz de control (botones, input de archivo, buscador) al imprimir */
+            .print-controls, .print-column-button, .print-single-button, .project-footer, .delete-manual-button, .delete-excel-button, #helpButton {
+                display: none !important; 
+            }
+
+            /* Asegurar que el área de la etiqueta se muestre bien */
+            .printable-area {
+                margin: 0;
+                padding: 0;
+                display: block !important; 
+            }
+
+            /* Forzar el ancho de página completa para el contenedor de la columna al imprimir */
+            .print-column-container {
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                box-sizing: border-box;
+            }
+
+            /* Estilo para cada "etiqueta" individual al imprimir */
+            .price-card {
+                page-break-inside: avoid;
+                box-shadow: none !important;
+                /* AUMENTADO: Mantener consistencia con el tamaño de pantalla de 11rem */
+                height: 11rem !important; 
+                width: 100%;
+                margin-bottom: 0.5rem; 
+                background-color: #ffffff !important; 
+                color: #000000 !important; /* Globalmente negro */
+                /* REGLA DE CORTE: Forzar un salto de página después de cada tarjeta (Intenta forzar el corte) */
+                page-break-after: always !important; 
+            }
+            
+            /* APLICACIÓN DE ESTILOS MÁS GRUESOS AL IMPRIMIR EN LA REGLA GENERAL */
+            
+            /* Producto: Negro y Máximo Grosor, alineación centrada */
+            .price-card h3 { 
+                color: #000000 !important;
+                font-size: 1.8rem !important; 
+                font-weight: 1000 !important; /* MÁXIMO GROSOR DEL INTER FONT */
+                text-align: center !important; /* Asegurar centrado */
+            }
+            
+            /* Contenedor del Precio: Asegura que todo el texto dentro sea negro */
+            .price-card > div:last-child {
+                color: #000000 !important; /* Asegura el negro */
+                font-weight: 1000 !important; /* Fuerza el grosor en el contenedor principal del precio */
+                /* NUEVO: Justificación para el precio */
+                justify-content: flex-start !important; /* Alinear el grupo Bs + Precio a la izquierda */
+                padding-left: 0.5rem !important; /* Un poco de margen a la izquierda del Bs */
+            }
+            
+            /* Símbolo de la moneda (Bs): Negro y Grosor Extra */
+            .price-card .currency-symbol {
+                 color: #000000 !important;
+                 font-weight: 1000 !important; /* MÁXIMO GROSOR DEL INTER FONT */
+                 /* NUEVO: Reduce tamaño y establece un ancho fijo */
+                 font-size: 2rem !important; /* Tamaño más pequeño que el valor */
+                 width: 2.5rem; /* Ancho fijo para alineación vertical */
+                 text-align: right;
+                 padding-top: 2rem !important; /* Mover Bs hacia arriba */
+            }
+
+            /* Valor del Precio (el número): Negro y Grosor Extra */
+            .price-card .price-value {
+                color: #000000 !important;
+                /* Aumentado a 5rem para que sea GRANDE */
+                font-size: 5rem !important; 
+                font-weight: 1000 !important; /* MÁXIMO GROSOR DEL INTER FONT */
+                line-height: 1 !important; /* Interlineado compacto */
+            }
+            
+            
+            /* Fecha y Handle Social: Negro y Máximo Grosor */
+            .price-card .ticket-date,
+            .price-card .social-handle {
+                 color: #000000 !important;
+                 font-weight: 1000 !important; /* MÁXIMO GROSOR DEL INTER FONT */
+            }
+        }
+
+        /* Estilos base para la vista en pantalla */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Estilos para el modo nocturno */
+        body.dark-mode {
+            background-color: #1e293b; /* Slate-800 */
+            color: #f1f5f9; /* Slate-100 */
+        }
+        
+        body.dark-mode #app {
+            background-color: #334155; /* Slate-700 */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        body.dark-mode header h1 {
+            color: #93c5fd; /* Blue-300 */
+        }
+
+        body.dark-mode header p {
+            color: #cbd5e1; /* Slate-300 */
+        }
+        
+        body.dark-mode .bg-gray-50 {
+            background-color: #475569; /* Slate-600 */
+            border-color: #64748b; /* Slate-500 */
+        }
+
+        body.dark-mode .text-gray-700 {
+            color: #cbd5e1;
+        }
+
+        body.dark-mode input, body.dark-mode .file-input-container {
+            border-color: #64748b;
+            background-color: #334155;
+            color: #f1f5f9;
+        }
+        
+        body.dark-mode .price-card {
+            background-color: #475569; /* Slate-600 */
+            border-color: #94a3b8 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        body.dark-mode .price-card h3 {
+            color: #f1f5f9;
+        }
+        
+        /* Aseguramos que el precio se vea bien en Dark Mode (un azul más claro) */
+        body.dark-mode .price-card .text-blue-600 { 
+            color: #93c5fd; /* Blue-300 */
+        }
+        
+        body.dark-mode .price-card .text-gray-500 {
+            color: #94a3b8;
+        }
+        
+        /* Estilo para el botón de impresión individual */
+        .print-single-button {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            z-index: 10;
+        }
+        
+        /* Estilo para el botón de eliminación manual */
+        .delete-manual-button {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            z-index: 10;
+        }
+
+        /* NUEVO: Estilo para el botón de eliminación de Excel */
+        .delete-excel-button {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            z-index: 10;
+        }
+
+        /* Definición base para la tarjeta de precio, incluyendo el borde punteado */
+        .price-card {
+             border: 1px dashed #ccc !important; /* Borde suave para indicar la separación */
+        }
+        
+        /* Estilo para ocultar/mostrar tarjetas en la búsqueda */
+        .price-card.hidden-by-filter {
+            display: none !important;
+        }
+        
+        /* Estilos para el modal */
+        .modal {
+            background-color: rgba(0, 0, 0, 0.5);
+            transition: opacity 0.3s ease-in-out;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .modal-content {
+            transform: translateY(-50px);
+            transition: transform 0.3s ease-in-out;
+        }
+        .modal.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal.open .modal-content {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="app" class="max-w-6xl mx-auto bg-white shadow-xl rounded-xl p-6 md:p-10 relative transition-colors duration-300">
+        
+        <!-- Botón de Modo Nocturno (Posicionado en la esquina superior derecha) -->
+        <button id="themeToggleButton" 
+                class="print-controls absolute top-4 right-4 p-2 rounded-full text-gray-700 bg-gray-200 hover:bg-gray-300 dark-mode:text-blue-300 dark-mode:bg-slate-500 dark-mode:hover:bg-slate-400 transition-colors duration-300"
+                title="Alternar Modo Nocturno">
+            <!-- Icono de Sol (predeterminado - modo claro) -->
+            <svg id="sunIcon" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <!-- Icono de Luna (modo oscuro) -->
+            <svg id="moonIcon" class="h-6 w-6 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+        </button>
+        
+        <header class="text-center mb-8 print-controls">
+            <!-- CONTENEDOR FLEX PARA EL TÍTULO Y EL ÍCONO -->
+            <div class="flex items-center justify-center space-x-2">
+                <!-- Ícono 'ico.ico' mostrado aquí -->
+                <img src="ico.ico" alt="Logo de Tickets" class="h-40 w-40 object-contain">
+                <!-- TÍTULO DINÁMICO -->
+                <h1 id="mainTitle" class="text-3xl font-extrabold text-blue-600 mb-2 transition-colors duration-300">Tickera</h1>
+                <img src="logo-cecosesola.ico" alt="Logo de Tickets" class="h-25 w-20 object-contain">
+
+            </div>
+            <!-- FIN DEL CONTENEDOR FLEX -->
+
+            <p id="current-date-display" class="text-lg font-bold text-gray-700 mb-2 transition-colors duration-300"></p> 
+            <!-- ESLOGAN REFLEJANDO EL LOGRO -->
+            <p class="text-gray-500 transition-colors duration-300 font-semibold italic">"Carga el archivo Excel para poder imprimir etiquetas de precios."</p>
+        </header>
+
+        <!-- Controles de Carga e Impresión -->
+        <div class="print-controls space-y-4 mb-8 p-4 border border-gray-200 rounded-lg bg-gray-50 transition-colors duration-300">
+            <div class="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-100 dark-mode:hover:bg-slate-500 transition duration-300 text-center file-input-container">
+                <label for="excelFile" class="block text-sm font-medium text-gray-700 mb-2 cursor-pointer dark-mode:text-gray-100">
+                    Arrastra o selecciona el archivo Excel (.xlsx, .xls)
+                </label>
+                <input type="file" id="excelFile" accept=".xlsx, .xls" 
+                       class="block w-full text-sm text-gray-500
+                              file:mr-4 file:py-2 file:px-4
+                              file:rounded-full file:border-0
+                              file:text-sm file:font-semibold
+                              file:bg-blue-50 file:text-blue-700
+                              hover:file:bg-blue-100 cursor-pointer dark-mode:file:bg-blue-200 dark-mode:file:text-blue-800" />
+            </div>
+            
+            <p id="message" class="text-sm text-red-500 hidden mt-2"></p>
+            
+            <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 items-center">
+                
+                <!-- BOTÓN DE AYUDA (NUEVO) -->
+                <button id="helpButton" onclick="openHelpModal()"
+                        class="w-full md:w-auto px-6 py-2 bg-indigo-500 text-white font-semibold rounded-lg shadow-md 
+                               hover:bg-indigo-600 transition duration-150">
+                     ? Ayuda / Instrucciones
+                </button>
+                
+                <!-- BOTÓN DE GENERACIÓN MANUAL -->
+                <button id="manualEntryButton" onclick="openManualModal()"
+                        class="w-full md:w-auto px-6 py-2 bg-yellow-500 text-white font-semibold rounded-lg shadow-md 
+                               hover:bg-yellow-600 transition duration-150">
+                     + Generar Ticket Manual
+                </button>
+
+                <!-- BOTÓN DE IMPRESIÓN PRINCIPAL -->
+                <button id="printButton" onclick="handleGlobalPrint()" disabled
+                        class="w-full md:w-auto px-6 py-2 bg-green-500 text-white font-semibold rounded-lg shadow-md 
+                               hover:bg-green-600 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed">
+                     Imprimir Productos Selecionados
+                </button>
+                
+                <!-- Buscador -->
+                <div class="relative w-full flex-grow">
+                    <input type="text" id="searchBox" onkeyup="filterProducts()" placeholder="Buscar producto..." disabled
+                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 dark-mode:disabled:bg-slate-600 dark-mode:disabled:text-gray-300 dark-mode:border-slate-500 dark-mode:bg-slate-700 dark-mode:placeholder-gray-400">
+                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark-mode:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+            </div>
+
+            <p class="text-xs text-gray-400 mt-2 dark-mode:text-gray-400">
+                El sistema toma la lista de productos del archivo Excel y la divide en 3 columnas uniformes para que la presentación o impresión de los datos sea más organizada y visualmente equilibrada.
+            </p>
+        </div>
+
+        <!-- Área de Resultados y Vista Previa de Impresión -->
+        <div id="placeholder-container" class="w-full">
+            <p id="placeholder" class="col-span-full text-center text-gray-400 py-10 dark-mode:text-gray-400">
+                Sube un archivo Excel para ver los precios listos para imprimir.
+            </p>
+        </div>
+        
+        <!-- Contenedor Principal de Columnas (IMPLANTANDO TU EJEMPLO) -->
+        <div id="priceList" class="printable-area hidden md:flex md:space-x-4 space-y-4 md:space-y-0">
+            
+            <!-- Columna 1 -->
+            <div id="column-1" class="print-column-container flex-1 min-w-0">
+                <!-- Botón llama a la función printColumn, que ahora SOLO selecciona la columna -->
+                <button onclick="selectColumnOnly(1)" id="print-col-1-btn" disabled
+                        class="print-controls print-column-button w-full mb-2 px-4 py-1 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-xs tracking-wider">
+                    SELECCIONAR COLUMNA 1
+                </button>
+                <div id="column-content-1" class="space-y-4"></div>
+            </div>
+            
+            <!-- Columna 2 -->
+            <div id="column-2" class="print-column-container flex-1 min-w-0">
+                 <!-- Botón llama a la función printColumn, que ahora SOLO selecciona la columna -->
+                <button onclick="selectColumnOnly(2)" id="print-col-2-btn" disabled
+                        class="print-controls print-column-button w-full mb-2 px-4 py-1 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-xs tracking-wider">
+                    SELECCIONAR COLUMNA 2
+                </button>
+                <div id="column-content-2" class="space-y-4"></div>
+            </div>
+            
+            <!-- Columna 3 -->
+            <div id="column-3" class="print-column-container flex-1 min-w-0">
+                 <!-- Botón llama a la función printColumn, que ahora SOLO selecciona la columna -->
+                <button onclick="selectColumnOnly(3)" id="print-col-3-btn" disabled
+                        class="print-controls print-column-button w-full mb-2 px-4 py-1 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-xs tracking-wider">
+                    SELECCIONAR COLUMNA 3
+                </button>
+                <div id="column-content-3" class="space-y-4"></div>
+            </div>
+            
+        </div>
+        
+        <!-- Mensaje para dispositivos pequeños (donde no se ve bien la división de 3 columnas) -->
+        <p class="md:hidden text-center text-gray-500 mt-4 dark-mode:text-gray-300">
+            Visualización optimizada para escritorio. Por favor, usa una pantalla más grande para ver las 3 columnas y los botones de selección.
+        </p>
+
+        <!-- SECCIÓN DE CRÉDITOS / PIE DE PÁGINA AÑADIDO (Ahora más discreto) -->
+        <footer class="project-footer text-center mt-12 pt-6 border-t border-gray-200 dark-mode:border-slate-600 print-controls">
+            <p class="text-lg font-semibold text-gray-700 dark-mode:text-gray-300">Fénix Ticker</p>
+            <p class="text-sm text-gray-500 dark-mode:text-gray-400 mt-0.5 italic">
+                Simboliza el resurgimiento y la creación a partir de la dificultad.
+            </p>
+        </footer>
+        <!-- FIN SECCIÓN DE CRÉDITOS -->
+    </div>
+
+    <!-- Modal para Entrada Manual -->
+    <div id="manualModal" class="modal fixed inset-0 flex items-center justify-center opacity-0 pointer-events-none z-50">
+        <div class="modal-content bg-white dark-mode:bg-slate-700 p-8 rounded-xl shadow-2xl w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800 dark-mode:text-gray-100">Generar ticket es mas rápido</h2>
+            
+            <form id="manualEntryForm" onsubmit="event.preventDefault(); generateManualTicket()">
+                <div class="mb-4">
+                    <label for="productName" class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-1">Nombre del Producto</label>
+                    <input type="text" id="productName" required maxlength="50"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark-mode:border-slate-500 dark-mode:bg-slate-600 dark-mode:text-white"
+                           placeholder="" />
+                </div>
+
+                <div class="mb-6">
+                    <label for="productPrice" class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-1">Precio</label>
+                    <input type="number" step="0.01" id="productPrice" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark-mode:border-slate-500 dark-mode:bg-slate-600 dark-mode:text-white"
+                           placeholder="" />
+                </div>
+                
+                <p id="modalError" class="text-sm text-red-500 mb-4 hidden"></p>
+
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeManualModal()"
+                            class="px-4 py-2 text-gray-600 dark-mode:text-gray-300 hover:text-gray-800 dark-mode:hover:text-white rounded-lg transition duration-150">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150">
+                        Generar e Imprimir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal para Selección de Feria -->
+    <div id="feriaSelectionModal" class="modal fixed inset-0 flex items-center justify-center z-50">
+        <div class="modal-content bg-white dark-mode:bg-slate-700 p-8 rounded-xl shadow-2xl w-full max-w-2xl">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 dark-mode:text-gray-100 text-center">Seleccione la Feria para la que va a imprimir</h2>
+            <p class="text-gray-600 dark-mode:text-gray-300 mb-6 text-center">Esta selección aparecerá en la parte superior y en cada ticket impreso.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <button type="button" onclick="selectFeria('centro')"
+                        class="px-4 py-8 bg-blue-500 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-600 transition duration-150 text-xl text-center transform hover:scale-105">
+                    Feria del Centro
+                </button>
+                <button type="button" onclick="selectFeria('este')"
+                        class="px-4 py-8 bg-green-500 text-white font-semibold rounded-lg shadow-lg hover:bg-green-600 transition duration-150 text-xl text-center transform hover:scale-105">
+                    Feria del Este
+                </button>
+                <button type="button" onclick="selectFeria('ruiz')"
+                        class="px-4 py-8 bg-yellow-500 text-white font-semibold rounded-lg shadow-lg hover:bg-yellow-600 transition duration-150 text-xl text-center transform hover:scale-105">
+                    Feria de Ruiz Pineda
+                </button>
+            </div>
+            <p class="text-xs text-gray-400 mt-6 text-center">La selección se guardará en su navegador.</p>
+        </div>
+    </div>
+    
+    <!-- Modal de Ayuda / Instrucciones (NUEVO) -->
+    <div id="helpModal" class="modal fixed inset-0 flex items-center justify-center opacity-0 pointer-events-none z-50">
+        <div class="modal-content bg-white dark-mode:bg-slate-700 p-8 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 dark-mode:text-gray-100 border-b pb-2">Guía de Uso Rápido de Tickera Fénix</h2>
+            <p class="text-gray-600 dark-mode:text-gray-300 mb-6">Siga estos pasos para cargar, generar e imprimir sus etiquetas de precio.</p>
+            
+            <div class="space-y-6">
+                <!-- Instrucción 1: Carga del Archivo -->
+                <div class="p-4 bg-blue-50 dark-mode:bg-blue-900/50 rounded-lg shadow-md">
+                    <h3 class="font-bold text-lg text-blue-700 dark-mode:text-blue-300 mb-2">1. Cargar el Archivo Excel</h3>
+                    <ol class="list-decimal list-inside space-y-1 text-gray-700 dark-mode:text-gray-300">
+                        <li>Asegúrese de que su archivo Excel (`.xlsx` o `.xls`) tenga los datos de producto y precio en el formato estándar.</li>
+                        <li>**Formato Esperado:** La aplicación lee los datos a partir de la **Fila 4**. Los datos deben estar en columnas pares: `Producto 1` (Col A), `Precio 1` (Col B), `Producto 2` (Col C), `Precio 2` (Col D), y así sucesivamente.</li>
+                        <li>Arrastre o use el botón **"Arrastra o selecciona el archivo Excel"** para cargar los precios.</li>
+                        <li>Los productos cargados aparecerán automáticamente en las 3 columnas.</li>
+                    </ol>
+                </div>
+                
+                <!-- Instrucción 2: Generación Manual -->
+                <div class="p-4 bg-yellow-50 dark-mode:bg-yellow-900/50 rounded-lg shadow-md">
+                    <h3 class="font-bold text-lg text-yellow-700 dark-mode:text-yellow-300 mb-2">2. Generar Tickets Manuales</h3>
+                    <ul class="list-disc list-inside space-y-1 text-gray-700 dark-mode:text-gray-300">
+                        <li>Haga clic en **"+ Generar Ticket Manual"** para crear una etiqueta única rápidamente.</li>
+                        <li>Estos tickets se añaden a la lista y se seleccionan automáticamente para la impresión global.</li>
+                        <li>Puede eliminar cualquier ticket manual haciendo clic en el icono de papelera.</li>
+                    </ul>
+                </div>
+                
+                <!-- Instrucción 3: Impresión -->
+                <div class="p-4 bg-green-50 dark-mode:bg-green-900/50 rounded-lg shadow-md">
+                    <h3 class="font-bold text-lg text-green-700 dark-mode:text-green-300 mb-2">3. Impresión de Etiquetas</h3>
+                    <ul class="list-disc list-inside space-y-1 text-gray-700 dark-mode:text-gray-300">
+                        <li>**Impresión Global:** Marque las casillas de los tickets que desea imprimir y luego use el botón **"Imprimir [X] Seleccionado(s)"** (botón verde).</li>
+                        <li>**Impresión por Columna:** Use los botones **"SELECCIONAR COLUMNA [X]"** (botón rojo) para marcar todos los tickets de esa columna, y luego use el botón verde de impresión.</li>
+                        <li>**Impresión Individual:** Use el botón de la impresora pequeña (esquina superior derecha) de cada ticket para imprimir solo esa etiqueta.</li>
+                        <li>**Importante:** La impresión está configurada para el tamaño de papel de recibo (210mm x 80mm) en orientación horizontal. Asegúrese de que la configuración de impresión de su navegador coincida.</li>
+                    </ul>
+                </div>
+
+                <!-- Instrucción 4: Selección de Feria -->
+                <div class="p-4 bg-indigo-50 dark-mode:bg-indigo-900/50 rounded-lg shadow-md">
+                    <h3 class="font-bold text-lg text-indigo-700 dark-mode:text-indigo-300 mb-2">4. Cambiar la Feria</h3>
+                    <p class="text-gray-700 dark-mode:text-gray-300">
+                        La selección de la Feria (`Centro`, `Este`, `Ruiz Pineda`) afecta el nombre que aparece en el título principal y en el handle social de cada ticket. Para cambiar la selección, puede hacer clic en el título **"Tickera [Nombre de Feria]"** o recargar la página.
+                    </p>
+                </div>
+                
+                <!-- Instrucción 5: Tasa del Dólar (NUEVO) -->
+                <div class="p-4 bg-pink-50 dark-mode:bg-pink-900/50 rounded-lg shadow-md">
+                    <h3 class="font-bold text-lg text-pink-700 dark-mode:text-pink-300 mb-2">5. Tasa del Dólar (Acceso Rápido)</h3>
+                    <p class="text-gray-700 dark-mode:text-gray-300">
+                        Para acceder a la página de generación de tickets de la **Tasa del Dólar** (si está disponible), simplemente presione la tecla **F5** en su teclado. Esto lo llevará a la página `dollar.html` para gestionar e imprimir esos tickets.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex justify-end mt-8">
+                <button type="button" onclick="closeHelpModal()"
+                        class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150">
+                    Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const excelFile = document.getElementById('excelFile');
+        const priceList = document.getElementById('priceList');
+        const message = document.getElementById('message');
+        const printButton = document.getElementById('printButton');
+        const placeholder = document.getElementById('placeholder');
+        const searchBox = document.getElementById('searchBox');
+        const placeholderContainer = document.getElementById('placeholder-container'); 
+        const currentDateDisplay = document.getElementById('current-date-display');
+        const mainTitle = document.getElementById('mainTitle'); // Nuevo elemento para el título
+        const themeToggleButton = document.getElementById('themeToggleButton');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+        const manualModal = document.getElementById('manualModal');
+        const modalError = document.getElementById('modalError');
+        const feriaSelectionModal = document.getElementById('feriaSelectionModal'); // Nuevo elemento del modal
+        const helpModal = document.getElementById('helpModal'); // NUEVO: Elemento del modal de ayuda
+
+        
+        // Elementos de contenido de columnas
+        const colContent1 = document.getElementById('column-content-1');
+        const colContent2 = document.getElementById('column-content-2');
+        const colContent3 = document.getElementById('column-content-3');
+        
+        // Elementos de botones de columna
+        const colBtn1 = document.getElementById('print-col-1-btn');
+        const colBtn2 = document.getElementById('print-col-2-btn');
+        const colBtn3 = document.getElementById('print-col-3-btn');
+
+        // Constantes y Estado de la Feria
+        const FERIAS = {
+            'centro': { name: 'Feria del Centro', handleSuffix: ' | FERIA DEL CENTRO' },
+            'este': { name: 'Feria del Este', handleSuffix: ' | FERIA DEL ESTE' },
+            'ruiz': { name: 'Feria de Ruiz Pineda', handleSuffix: ' | FERIA DE RUIZ PINEDA' }
+        };
+        const DEFAULT_FERIA_ID = 'este';
+        const BASE_SOCIAL_HANDLE = "@ <strong> 🅾redcecosesola";
+        
+        let currentFeria = null; // Se inicializa en init()
+        const CURRENCY_SYMBOL = "Bs";
+        const MAX_RETRIES = 3;
+
+        // ESTADO GLOBAL para almacenar datos y selecciones
+        let allPriceCards = []; 
+        let selectedTickets = new Set(); // ID's de tickets seleccionados
+        let nextManualId = 10000; // Para tickets generados manualmente
+        let nextExcelId = 1; // Para tickets generados del Excel
+        
+        /**
+         * Lógica de Selección de Feria (NUEVO)
+         */
+        function initFeriaSelection() {
+            const savedFeriaId = localStorage.getItem('feriaSelection');
+            
+            if (savedFeriaId && FERIAS[savedFeriaId]) {
+                // Si ya hay una selección guardada, la cargamos
+                currentFeria = FERIAS[savedFeriaId];
+                feriaSelectionModal.classList.remove('open');
+            } else {
+                // Si no hay selección, abrimos el modal
+                currentFeria = FERIAS[DEFAULT_FERIA_ID]; // Inicializa con un default por si acaso
+                feriaSelectionModal.classList.add('open');
+            }
+            updateFeriaDisplay();
+        }
+        
+        function selectFeria(feriaId) {
+            if (FERIAS[feriaId]) {
+                currentFeria = FERIAS[feriaId];
+                localStorage.setItem('feriaSelection', feriaId);
+                updateFeriaDisplay();
+                
+                // Cerrar modal con transición
+                feriaSelectionModal.classList.remove('open');
+                
+                // Si ya hay precios cargados, regenerar para que muestren el nuevo handle
+                if (allPriceCards.length > 0) {
+                     renderFilteredLabels(searchBox.value.toLowerCase().trim());
+                     displayMessage(`Feria actualizada a "${currentFeria.name}". El handle en los tickets ha cambiado.`, 'info');
+                } else {
+                    displayMessage(`Feria seleccionada: "${currentFeria.name}".`, 'info');
+                }
+            }
+        }
+        window.selectFeria = selectFeria;
+
+        function updateFeriaDisplay() {
+             if (currentFeria) {
+                 mainTitle.textContent = `Tickera ${currentFeria.name}`;
+             } else {
+                 mainTitle.textContent = `Tickera`;
+             }
+        }
+
+
+        /**
+         * Lógica del Modal Manual
+         */
+        function openManualModal() {
+            // Limpiar formulario y errores
+            document.getElementById('manualEntryForm').reset();
+            modalError.classList.add('hidden');
+            // Abrir modal con transición
+            manualModal.classList.add('open');
+            // Foco en el primer campo
+            setTimeout(() => document.getElementById('productName').focus(), 300);
+        }
+        window.openManualModal = openManualModal;
+
+        function closeManualModal() {
+            // Cerrar modal con transición
+            manualModal.classList.remove('open');
+        }
+        window.closeManualModal = closeManualModal;
+        
+        /**
+         * Lógica del Modal de Ayuda (NUEVO)
+         */
+        function openHelpModal() {
+            helpModal.classList.add('open');
+        }
+        window.openHelpModal = openHelpModal;
+
+        function closeHelpModal() {
+            helpModal.classList.remove('open');
+        }
+        window.closeHelpModal = closeHelpModal;
+
+        function generateManualTicket() {
+            const product = document.getElementById('productName').value.trim();
+            const priceStr = document.getElementById('productPrice').value.trim();
+            
+            if (!product || !priceStr) {
+                modalError.textContent = "Por favor, complete ambos campos.";
+                modalError.classList.remove('hidden');
+                return;
+            }
+            
+            const price = parseFloat(priceStr);
+            if (isNaN(price) || price < 0) {
+                modalError.textContent = "El precio debe ser un número válido y positivo.";
+                modalError.classList.remove('hidden');
+                return;
+            }
+            
+            modalError.classList.add('hidden');
+            closeManualModal();
+
+            // 1. Generar nuevo ID y formatear precio
+            const ticketId = `manual-card-${nextManualId++}`;
+            const formattedPrice = price.toLocaleString('es-ES', { 
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2 
+            });
+
+            const newCardData = {
+                id: ticketId,
+                product: product.toUpperCase(),
+                formattedPrice: formattedPrice,
+                isManual: true // Etiquetar como manual
+            };
+
+            // 2. Agregar a la lista global de tarjetas y seleccionar
+            allPriceCards.push(newCardData);
+            selectedTickets.add(ticketId); // Se selecciona automáticamente para imprimir
+
+            // 3. Renderizar la nueva lista (manteniendo el filtro si existe)
+            renderFilteredLabels(searchBox.value.toLowerCase().trim());
+            
+            // 4. Mostrar mensaje y disparar impresión
+            displayMessage(`Ticket manual para "${product.toUpperCase()}" generado y listo para imprimir.`, 'info');
+            
+            // 5. Activar la advertencia de recarga si hay precios
+            checkAndSetUnloadWarning();
+
+            // Opcional: Desplazarse al nuevo ticket
+            setTimeout(() => {
+                const newTicketElement = document.getElementById(ticketId);
+                if (newTicketElement) {
+                    newTicketElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Animación visual para destacar el ticket
+                    newTicketElement.style.boxShadow = '0 0 15px 5px rgba(255, 165, 0, 0.7)';
+                    setTimeout(() => newTicketElement.style.boxShadow = '', 1000);
+                }
+            }, 50); 
+            
+            // El usuario debe hacer clic en "Imprimir Productos Seleccionados"
+        }
+        window.generateManualTicket = generateManualTicket;
+
+        /**
+         * Elimina un ticket por su ID (manual o de Excel).
+         * @param {string} ticketId - El ID del ticket a eliminar.
+         */
+        function deleteTicket(ticketId) {
+             const isManual = ticketId.startsWith('manual-');
+             const confirmationMsg = isManual 
+                 ? "¿Compañero Estás seguro de que deseas eliminar este ticket manual?"
+                 : "¿Estás seguro de quitar este producto de la lista de impresión? Deberás volver a cargar el Excel para recuperarlo.";
+
+            // Confirmación antes de eliminar
+            if (!confirm(confirmationMsg)) {
+                return;
+            }
+            
+            // 1. Eliminar de la lista global de tarjetas
+            allPriceCards = allPriceCards.filter(card => card.id !== ticketId);
+            
+            // 2. Asegurarse de que esté deseleccionado
+            selectedTickets.delete(ticketId);
+
+            // 3. Re-renderizar la vista
+            renderFilteredLabels(searchBox.value.toLowerCase().trim());
+            
+            displayMessage(`Ticket ${ticketId} eliminado con éxito.`, 'info');
+
+            // 4. Si se eliminaron todos los tickets, desactiva la advertencia
+            checkAndSetUnloadWarning();
+            
+            if (allPriceCards.length === 0) {
+                 placeholderContainer.classList.remove('hidden');
+                 priceList.classList.add('hidden');
+                 searchBox.disabled = true;
+            }
+        }
+        window.deleteTicket = deleteTicket; // Unificamos el nombre a nivel global
+
+        // Mantenemos la función deleteManualTicket como alias para retrocompatibilidad
+        window.deleteManualTicket = (ticketId) => deleteTicket(ticketId);
+        // Creamos la función deleteExcelTicket para ser usada en el HTML
+        window.deleteExcelTicket = (ticketId) => deleteTicket(ticketId);
+
+        /**
+         * FUNCIÓN DE MODO NOCTURNO
+         */
+        function toggleTheme() {
+            const isDarkMode = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+            updateThemeIcons(isDarkMode);
+        }
+
+        function updateThemeIcons(isDarkMode) {
+            if (isDarkMode) {
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+        }
+        
+        function applySavedTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            let isDarkMode = false;
+            if (savedTheme === 'dark') {
+                isDarkMode = true;
+            } else if (savedTheme === null && prefersDark) {
+                isDarkMode = true;
+            }
+
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
+            updateThemeIcons(isDarkMode);
+        }
+
+        // Aplicar el tema al cargar la página
+        applySavedTheme();
+        
+        // Listener para el botón de tema
+        themeToggleButton.addEventListener('click', toggleTheme);
+
+        /**
+         * Obtiene la fecha actual en formato dd/mm/aaaa.
+         * @returns {string} La fecha formateada.
+         */
+        function getCurrentDateFormatted(includePrefix = true) {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0'); // Meses son 0-indexados
+            const year = now.getFullYear();
+            const dateStr = `${day}/${month}/${year}`;
+            return includePrefix ? `Fecha del Dia: ${dateStr}` : dateStr;
+        }
+
+        // Inicializar la fecha al cargar la página en la cabecera principal
+        currentDateDisplay.textContent = getCurrentDateFormatted();
+
+
+        /**
+         * Genera el HTML para una tarjeta de precio.
+         * @param {object} data - Datos del ticket (id, product, formattedPrice, isManual).
+         * @param {boolean} isChecked - Si el checkbox debe estar marcado.
+         * @returns {string} HTML de la tarjeta de precio.
+         */
+        function createPriceCardHtml(data, isChecked) {
+            const checkedAttr = isChecked ? 'checked' : '';
+            const ticketId = data.id;
+            const todayDate = getCurrentDateFormatted(false); // Obtener solo la fecha
+            
+            const isManual = data.isManual;
+            
+            // Estilo para diferenciar tarjetas manuales
+            const cardClass = isManual ? 'border-2 border-yellow-500' : 'border-2 border-green-500/0 hover:border-green-500/50';
+
+            // Botón de Eliminación (Depende si es manual o de Excel)
+            let deleteButtonHtml = '';
+            let deleteButtonClass = '';
+            let deleteTitle = '';
+
+            if (isManual) {
+                deleteButtonClass = 'delete-manual-button bg-red-500 hover:bg-red-600 focus:ring-red-400';
+                deleteTitle = 'Eliminar este ticket manual';
+                deleteButtonHtml = `
+                    <button onclick="deleteTicket('${ticketId}')" 
+                            class="${deleteButtonClass} text-white p-1.5 rounded-full shadow-lg focus:outline-none focus:ring-2 transition"
+                            title="${deleteTitle}">
+                        <!-- Icono de Bote de Basura -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" />
+                            </svg>
+                    </button>
+                `;
+            } else {
+                 // NUEVO: Botón para eliminar productos cargados del Excel
+                deleteButtonClass = 'delete-excel-button bg-gray-500 hover:bg-gray-600 focus:ring-gray-400';
+                deleteTitle = 'Quitar de la lista de impresión';
+                deleteButtonHtml = `
+                    <button onclick="deleteTicket('${ticketId}')" 
+                            class="${deleteButtonClass} text-white p-1.5 rounded-full shadow-lg focus:outline-none focus:ring-2 transition"
+                            title="${deleteTitle}">
+                        <!-- Icono de Quitar/Cerrar (X) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                `;
+            }
+
+            // Usamos BASE_SOCIAL_HANDLE y el sufijo de la feria actual
+            const socialHandleText = `${BASE_SOCIAL_HANDLE}${currentFeria ? currentFeria.handleSuffix : ''}`;
+
+            return `
+                <div id="${ticketId}" 
+                    class="price-card rounded-lg p-4 bg-white shadow-md hover:shadow-lg transition-all duration-200 flex flex-col justify-between h-44 relative ${cardClass}">
+                    
+                    <!-- CONTROLES DE LA TARJETA (CHECKBOX) -->
+                    <div class="absolute top-4 left-4 print-controls z-10">
+                        <input type="checkbox" id="check-${ticketId}" 
+                            onchange="toggleTicketSelection('${ticketId}')" 
+                            ${checkedAttr}
+                            class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark-mode:bg-slate-700 dark-mode:border-slate-500 dark-mode:checked:bg-blue-400 cursor-pointer">
+                    </div>
+
+                    <!-- Botón que imprime SÓLO este ticket -->
+                    <button onclick="printSingleTicket('${ticketId}')" 
+                            class="print-single-button bg-blue-500 text-white p-1.5 rounded-full shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                            title="Imprimir solo esta etiqueta">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5 4V2a2 2 0 012-2h6a2 2 0 012 2v2h2a2 2 0 012 2v5a2 2 0 01-2 2h-2v4a2 2 0 01-2 2H7a2 2 0 01-2-2v-4H3a2 2 0 01-2-2V6a2 2 0 012-2h2zm10 2H5v3h10V6z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    
+                    ${deleteButtonHtml} <!-- Botón de eliminación (manual o excel) -->
+
+                    <div class="text-center mt-2">
+                        <!-- FECHA ACTUAL AÑADIDA AQUÍ -->
+                        <!-- Clase ticket-date y social-handle son ahora más específicas y negras por defecto -->
+                        <p class="ticket-date text-xs font-bold text-gray-900 mb-0.5">${todayDate}</p> 
+                        <!-- HANDLE SOCIAL Y SUFIJO DE FERIA -->
+                        <p class="social-handle text-xs font-medium text-gray-500">${socialHandleText}</p>
+                        
+                        <!-- Envolver el H3 en una etiqueta para que el clic grande seleccione/deseleccione -->
+                        <label for="check-${ticketId}" class="block cursor-pointer">
+                            <!-- CLAVE: Grosor font-black y leading-tight para máxima visibilidad y espacio -->
+                            <!-- Quitamos text-center de aquí porque ya está en el estilo global -->
+                            <h3 class="text-2xl font-black text-gray-900 uppercase tracking-tight leading-tight">${data.product}</h3>
+                        </label>
+                    </div>
+                    <!-- Precio se mantiene en text-4xl para ser más pequeño, pero ahora tiene más espacio en la tarjeta h-44 -->
+                    <div class="text-4xl font-extrabold text-blue-600 w-full flex items-end justify-center pb-1">
+                        <!-- Clases currency-symbol y price-value para sobrescribir fácilmente en impresión -->
+                        <!-- NUEVO: Alineación a la izquierda para simular el desplazamiento que quieres -->
+                        <span class="currency-symbol text-xl font-bold mr-1 text-blue-600">Bs</span>
+                        <span class="price-value text-blue-600">${data.formattedPrice}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * Alterna la selección de un ticket.
+         * @param {string} ticketId - El ID único del ticket.
+         */
+        function toggleTicketSelection(ticketId) {
+            const checkbox = document.getElementById(`check-${ticketId}`);
+            if (checkbox.checked) {
+                selectedTickets.add(ticketId);
+            } else {
+                selectedTickets.delete(ticketId);
+            }
+            updatePrintButtonState();
+        }
+        window.toggleTicketSelection = toggleTicketSelection;
+
+        /**
+         * Actualiza el texto y estado de los botones de impresión (Principal y Columna).
+         */
+        function updatePrintButtonState() {
+            const count = selectedTickets.size;
+            const hasVisibleContent = allPriceCards.length > 0;
+            
+            // Botón de Impresión Principal
+            if (count > 0) {
+                printButton.textContent = `2. Imprimir ${count} Seleccionado(s)`;
+                printButton.disabled = false;
+            } else {
+                printButton.textContent = " Imprimir Productos Selecionados";
+                printButton.disabled = !hasVisibleContent; // Solo habilitar si hay contenido cargado
+            }
+            
+            // Botones de Columna: Se habilitan si la lista está cargada y tienen contenido visible
+            const isLoaded = hasVisibleContent;
+            colBtn1.disabled = !isLoaded || colContent1.children.length === 0;
+            colBtn2.disabled = !isLoaded || colContent2.children.length === 0;
+            colBtn3.disabled = !isLoaded || colContent3.children.length === 0;
+
+        }
+
+        /**
+         * Imprime solo los tickets seleccionados.
+         */
+        function printSelectedTickets() {
+            if (selectedTickets.size === 0) return;
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write('<html><head><title>Tickets Seleccionados</title>');
+            
+            // Incluir estilos para impresión selectiva
+            printWindow.document.write('<script src="https://cdn.tailwindcss.com"><\/script>');
+            printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900;1000&display=swap" rel="stylesheet">');
+            printWindow.document.write(`<style>
+                /* Márgenes de página a la configuración predeterminada del usuario (0mm, 6.5mm, 27mm, 0mm) */
+                @page { 
+                    size: 210mm 80mm; /* Intercambiado para forzar paisaje */
+                    margin: 6.5mm 27mm 0mm 0mm !important; /* top right bottom left */
+                    orientation: landscape; /* FORZAR HORIZONTAL */
+                }
+
+                body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: #fff; color: #000; }
+                .price-card { 
+                    border: 1px dashed #ccc !important; 
+                    box-shadow: none !important;
+                    page-break-inside: avoid;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    justify-content: space-between !important;
+                    /* AUMENTADO: Consistencia con la vista de pantalla */
+                    height: 11rem !important; 
+                    width: 100%;
+                    margin-bottom: 0.5rem; 
+                    background-color: #ffffff !important;
+                    color: #000000 !important;
+                    /* APLICACIÓN DE CORTE (SALTO DE PÁGINA) */
+                    page-break-after: always !important; 
+                }
+                
+                /* INICIO ESTILOS AÑADIDOS PARA MAYOR GROSOR Y TAMAÑO EN IMPRESIÓN */
+                /* Aseguramos NEGRO PURO y MÁXIMO GROSOR en todo */
+                .price-card h3 { 
+                    color: #000000 !important; 
+                    font-size: 1.8rem !important; 
+                    font-weight: 1000 !important; /* MÁXIMO GROSOR */
+                    line-height: 1.1 !important; /* Interlineado ajustado */
+                    text-align: center !important; /* Asegurar centrado */
+                }
+                
+                .price-card > div:last-child {
+                    color: #000000 !important;
+                    font-weight: 1000 !important; /* MÁXIMO GROSOR */
+                    /* NUEVO: Justificación para el precio */
+                    justify-content: flex-start !important; /* Alinear el grupo Bs + Precio a la izquierda */
+                    padding-left: 0.5rem !important; /* Un poco de margen a la izquierda del Bs */
+                }
+                
+                /* Símbolo de la moneda (Bs): Negro y Grosor Extra */
+                .price-card .currency-symbol {
+                     color: #000000 !important;
+                     font-weight: 1000 !important; /* MÁXIMO GROSOR DEL INTER FONT */
+                     /* NUEVO: Reduce tamaño y establece un ancho fijo */
+                     font-size: 2rem !important; /* Tamaño más pequeño que el valor */
+                     width: 2.5rem; /* Ancho fijo para alineación vertical */
+                     text-align: right;
+                     padding-top: 2rem !important; /* Mover Bs hacia arriba */
+                }
+                
+                .price-card .price-value {
+                    font-size: 5rem !important; /* Aumentado a 5rem para GRANDE */
+                    font-weight: 1000 !important; /* MÁXIMO GROSOR */
+                    color: #000000 !important;
+                    line-height: 1 !important;
+                }
+                
+                /* FIN ESTILOS AÑADIDOS */
+
+                /* Ocultar todos los controles de la tarjeta en la impresión */
+                .print-single-button, .print-controls, .delete-manual-button, .delete-excel-button { display: none !important; }
+                
+                /* Fecha y Handle Social: Negro y Máximo Grosor */
+                .price-card .ticket-date,
+                .price-card .social-handle {
+                    color: #000000 !important;
+                    font-weight: 1000 !important; /* MÁXIMO GROSOR */
+                }
+                
+                .ticket-date { display: block !important; } 
+            </style>`);
+            printWindow.document.write('</head><body>');
+
+            // Construir el contenido HTML solo con los seleccionados
+            let printContent = '';
+            selectedTickets.forEach(id => {
+                const element = document.getElementById(id); 
+                if (element) {
+                    printContent += element.outerHTML;
+                }
+            });
+            
+            printWindow.document.write(printContent);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+
+            // CLAVE: Aumentar el tiempo de espera a 500ms para que Tailwind y las fuentes carguen bien.
+            printWindow.onload = function() {
+                setTimeout(() => { 
+                    printWindow.print();
+                }, 500); 
+            };
+        }
+
+        /**
+         * Maneja el evento de impresión global (Todos visibles o Seleccionados).
+         */
+        function handleGlobalPrint() {
+            if (selectedTickets.size > 0) {
+                printSelectedTickets();
+            } else {
+                // Si no hay selección, imprime todo lo que es visible (útil después de una búsqueda)
+                // Esto usará la regla 'page-break-after: always' del CSS principal @media print
+                window.print(); 
+            }
+        }
+        window.handleGlobalPrint = handleGlobalPrint; 
+
+        /**
+         * Selecciona todos los tickets visibles en una columna específica.
+         * Deselecciona todos los demás tickets primero.
+         * @param {number} colIndex - 1, 2, o 3.
+         * @returns {number} El número de tickets seleccionados.
+         */
+        function selectColumnTickets(colIndex) {
+            const containerId = `column-content-${colIndex}`;
+            const container = document.getElementById(containerId);
+            if (!container) return 0;
+
+            // 1. Deseleccionar globalmente todos los tickets
+            selectedTickets.forEach(id => {
+                const checkbox = document.getElementById(`check-${id}`);
+                if (checkbox) checkbox.checked = false;
+            });
+            selectedTickets.clear();
+
+            // 2. Seleccionar todos los visibles en esta columna
+            const cards = container.querySelectorAll('.price-card');
+            cards.forEach(card => {
+                const ticketId = card.id;
+                selectedTickets.add(ticketId);
+                const checkbox = document.getElementById(`check-${ticketId}`);
+                if (checkbox) checkbox.checked = true;
+            });
+
+            // 3. Actualizar el estado del botón principal
+            updatePrintButtonState();
+            
+            return cards.length;
+        }
+        
+        /**
+         * NUEVA FUNCIÓN: Selecciona una columna SIN imprimir.
+         */
+        function selectColumnOnly(colIndex) {
+            const count = selectColumnTickets(colIndex); // Selecciona la columna
+            
+            if (count > 0) {
+                displayMessage(`Columna ${colIndex} seleccionada. ${count} tickets listos para imprimir. Haga clic en el botón verde.`, 'info');
+                
+            } else {
+                displayMessage(`La columna ${colIndex} está vacía.`, 'error');
+            }
+        }
+        window.selectColumnOnly = selectColumnOnly;
+
+        /**
+         * FUNCIÓN DE IMPRESIÓN DE TICKET INDIVIDUAL (Actualizada con salto de página/corte)
+         */
+        function printSingleTicket(elementId) {
+            const ticketElement = document.getElementById(elementId);
+            if (!ticketElement) {
+                console.error("Elemento no encontrado para imprimir:", elementId);
+                return;
+            }
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write('<html><head><title>Imprimir Etiqueta</title>');
+            printWindow.document.write('<script src="https://cdn.tailwindcss.com"><\/script>');
+            printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900;1000&display=swap" rel="stylesheet">');
+            printWindow.document.write(`<style>
+                /* Márgenes de página a la configuración predeterminada del usuario (0mm, 6.5mm, 27mm, 0mm) */
+                @page { 
+                    size: 210mm 80mm; /* Intercambiado para forzar paisaje */
+                    margin: 6.5mm 27mm 0mm 0mm !important; /* top right bottom left */
+                    orientation: landscape; /* FORZAR HORIZONTAL */
+                }
+                
+                body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: #fff; color: #000; }
+                .price-card { 
+                    border: 1px dashed #ccc !important; 
+                    box-shadow: none !important;
+                    page-break-inside: avoid;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    justify-content: space-between !important;
+                    /* AUMENTADO: Consistencia con la vista de pantalla */
+                    height: 11rem !important; 
+                    width: 100%;
+                    background-color: #ffffff !important;
+                    color: #000000 !important;
+                    /* APLICACIÓN DE CORTE (SALTO DE PÁGINA) */
+                    page-break-after: always !important;
+                }
+
+                /* INICIO ESTILOS AÑADIDOS PARA MAYOR GROSOR Y TAMAÑO EN IMPRESIÓN */
+                /* Aseguramos NEGRO PURO y MÁXIMO GROSOR en todo */
+                .price-card h3 { 
+                    color: #000000 !important; 
+                    font-size: 1.8rem !important; 
+                    font-weight: 1000 !important; /* MÁXIMO GROSOR */
+                    line-height: 1.1 !important; /* Interlineado ajustado */
+                    text-align: center !important; /* Asegurar centrado */
+                }
+                
+                .price-card > div:last-child {
+                    color: #000000 !important;
+                    font-weight: 1000 !important; /* MÁXIMO GROSOR */
+                    /* NUEVO: Justificación para el precio */
+                    justify-content: flex-start !important; /* Alinear el grupo Bs + Precio a la izquierda */
+                    padding-left: 0.5rem !important; /* Un poco de margen a la izquierda del Bs */
+                }
+                
+                /* Símbolo de la moneda (Bs): Negro y Grosor Extra */
+                .price-card .currency-symbol {
+                     color: #000000 !important;
+                     font-weight: 1000 !important; /* MÁXIMO GROSOR DEL INTER FONT */
+                     /* NUEVO: Reduce tamaño y establece un ancho fijo */
+                     font-size: 2rem !important; /* Tamaño más pequeño que el valor */
+                     width: 2.5rem; /* Ancho fijo para alineación vertical */
+                     text-align: right;
+                     padding-top: 2rem !important; /* Mover Bs hacia arriba */
+                }
+                
+                .price-card .price-value {
+                    font-size: 5rem !important; /* Aumentado a 5rem para GRANDE */
+                    font-weight: 1000 !important; /* MÁXIMO GROSOR */
+                    color: #000000 !important;
+                    line-height: 1 !important;
+                }
+                /* FIN ESTILOS AÑADIDOS */
+                
+                /* Ocultar todos los controles de la tarjeta en la impresión */
+                .print-single-button, .print-controls, .delete-manual-button, .delete-excel-button { display: none !important; }
+                
+                /* Fecha y Handle Social: Negro y Máximo Grosor */
+                .price-card .ticket-date,
+                .price-card .social-handle {
+                    color: #000000 !important;
+                    font-weight: 1000 !important; /* MÁXIMO GROSOR */
+                }
+                
+                .ticket-date { display: block !important; } 
+            </style>`);
+            
+            printWindow.document.write('</head><body>');
+            printWindow.document.write(ticketElement.outerHTML);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close(); 
+
+            // CLAVE: Aumentar el tiempo de espera a 500ms para que Tailwind y las fuentes carguen bien.
+            printWindow.onload = function() {
+                setTimeout(() => { 
+                    printWindow.print();
+                }, 500); 
+            };
+            
+        }
+        window.printSingleTicket = printSingleTicket;
+        
+        /**
+         * Filtra los productos visibles basándose en el texto de búsqueda.
+         */
+        function filterProducts() {
+            const searchTerm = searchBox.value.toLowerCase().trim();
+            renderFilteredLabels(searchTerm);
+        }
+        window.filterProducts = filterProducts; 
+        
+        /**
+         * Renderiza los tickets filtrados, regenerando el HTML para mantener el estado de selección.
+         * @param {string} searchTerm - El término de búsqueda.
+         */
+        function renderFilteredLabels(searchTerm) {
+            // Limpiar contenido actual de las columnas
+            colContent1.innerHTML = '';
+            colContent2.innerHTML = '';
+            colContent3.innerHTML = '';
+            
+            let currentColumn = 1;
+            const columnContents = { 1: '', 2: '', 3: '' };
+            let visibleCount = 0;
+
+            allPriceCards.forEach(cardData => {
+                const productName = cardData.product.toLowerCase();
+                
+                if (searchTerm === "" || productName.includes(searchTerm)) {
+                    // Re-generar HTML para incluir el estado de selección
+                    const isChecked = selectedTickets.has(cardData.id);
+                    const html = createPriceCardHtml(cardData, isChecked);
+                    
+                    columnContents[currentColumn] += html;
+                    visibleCount++;
+                    
+                    // Ciclar a la siguiente columna
+                    currentColumn = (currentColumn % 3) + 1;
+                }
+            });
+
+            // Insertar el HTML en los contenedores de columna
+            colContent1.innerHTML = columnContents[1];
+            colContent2.innerHTML = columnContents[2];
+            colContent3.innerHTML = columnContents[3];
+
+            // Mostrar/Ocultar placeholder
+            if (visibleCount === 0 && searchTerm !== "" && allPriceCards.length > 0) {
+                placeholder.textContent = `No se encontraron resultados para "${searchBox.value}".`;
+                placeholderContainer.classList.remove('hidden');
+                priceList.classList.add('hidden');
+            } else if (allPriceCards.length > 0) {
+                placeholderContainer.classList.add('hidden');
+                priceList.classList.remove('hidden');
+            } else {
+                 placeholderContainer.classList.remove('hidden');
+                 priceList.classList.add('hidden');
+                 placeholder.textContent = "Sube un archivo Excel para ver los precios listos para imprimir.";
+            }
+
+            // Actualizar el estado de los botones (incluida la selección global)
+            updatePrintButtonState(); 
+        }
+        
+        /**
+         * Muestra un mensaje de error o advertencia.
+         */
+        function displayMessage(text, type = 'error') {
+            message.textContent = text;
+            message.className = `text-sm mt-2 p-3 rounded-lg ${type === 'error' ? 'text-red-700 bg-red-100 dark-mode:bg-red-900 dark-mode:text-red-300' : 'text-blue-700 bg-blue-100 dark-mode:bg-blue-900 dark-mode:text-blue-300'}`;
+            message.classList.remove('hidden');
+        }
+
+        /**
+         * Procesa los datos del archivo Excel (Mantenida).
+         */
+        async function processExcelData(data, retryCount = 0) {
+            try {
+                // Reiniciar estado de búsqueda y lista
+                searchBox.value = '';
+                searchBox.disabled = true;
+                
+                // Conservar solo los tickets manuales. Los de Excel se re-cargan
+                allPriceCards = allPriceCards.filter(card => card.isManual);
+                // Mantenemos la selección de los manuales que aún existen
+                selectedTickets = new Set(allPriceCards.filter(card => selectedTickets.has(card.id)).map(card => card.id));
+                nextExcelId = 1; // Reiniciar contador de ID de Excel
+
+                colContent1.innerHTML = '';
+                colContent2.innerHTML = '';
+                colContent3.innerHTML = '';
+
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                if (!worksheet) throw new Error("La primera hoja del Excel está vacía.");
+                
+                // Lee el archivo asumiendo que los datos comienzan en la fila 4 (índice 3)
+                const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, defval: null });
+                if (rawData.length < 4) throw new Error("El archivo no contiene datos a partir de la fila 4.");
+
+                renderPriceLabels(rawData);
+                
+            } catch (error) {
+                if (retryCount < MAX_RETRIES) {
+                    console.warn(`Error procesando Excel. Reintentando... (${retryCount + 1})`, error);
+                    await new Promise(resolve => setTimeout(resolve, 500 * (retryCount + 1)));
+                    await processExcelData(data, retryCount + 1);
+                } else {
+                    console.error("Fallo al procesar el archivo Excel.", error);
+                    displayMessage(`Error al leer el archivo: ${error.message}`, 'error');
+                    updatePrintButtonState(); // Deshabilita botones
+                    priceList.classList.add('hidden');
+                    placeholderContainer.classList.remove('hidden');
+                    placeholder.textContent = "Sube un archivo Excel para ver los precios listos para imprimir.";
+                }
+            }
+        }
+
+        /**
+         * Renderiza la lista de precios, almacenando solo los datos.
+         */
+        function renderPriceLabels(rawData) {
+            let validCount = 0;
+
+            // Ignoramos las primeras 3 filas y procesamos a partir de la 4.
+            const dataRows = rawData.slice(3);
+
+            // 1. Generar solo los DATOS del Excel y añadirlos a allPriceCards
+            dataRows.forEach(row => {
+                for (let colIndex = 0; colIndex < row.length; colIndex += 2) {
+                    const product = row[colIndex];
+                    const price = row[colIndex + 1]; 
+                    
+                    if (!product || typeof product !== 'string' || product.trim() === '') continue;
+
+                    let formattedPrice = 'N/A';
+                    let validPrice = false;
+
+                    if (price !== undefined && price !== null && price !== "") {
+                        // CLAVE: Usamos .replace(/[$,]/g, '').trim() para limpiar precios de formato excel
+                        const numPrice = parseFloat(String(price).replace(/[$,]/g, '').trim()); 
+                        if (!isNaN(numPrice)) {
+                            formattedPrice = numPrice.toLocaleString('es-ES', { 
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2 
+                            });
+                            validPrice = true;
+                        }
+                    }
+                    
+                    if (validPrice) {
+                        // Usamos el contador nextExcelId que se reinicia al cargar un nuevo Excel
+                        const ticketId = `excel-card-${nextExcelId++}`;
+                        
+                        allPriceCards.push({
+                            id: ticketId,
+                            product: product,
+                            formattedPrice: formattedPrice,
+                            isManual: false
+                        });
+                        validCount++;
+                    }
+                }
+            });
+
+            // 2. Distribuir y Renderizar el HTML
+            if (allPriceCards.length > 0) {
+                renderFilteredLabels(""); // Renderiza sin filtro (muestra todo)
+                placeholderContainer.classList.add('hidden');
+                priceList.classList.remove('hidden');
+                searchBox.disabled = false;
+                
+                updatePrintButtonState(); // Sincroniza el estado de los botones
+                
+                const excelCount = allPriceCards.filter(c => !c.isManual).length;
+                const manualCount = allPriceCards.filter(c => c.isManual).length;
+                
+                let summaryMessage = '';
+                if (excelCount > 0) summaryMessage += `Se cargaron ${excelCount} precios del Excel.`;
+                if (manualCount > 0) summaryMessage += `${excelCount > 0 ? ' y' : ''} ${manualCount} tickets manuales están presentes.`;
+                
+                displayMessage(`Éxito: ${summaryMessage} Total de tickets: ${allPriceCards.length}.`, 'info');
+            } else {
+                // Si no hay nada (ni manuales ni de Excel)
+                placeholderContainer.classList.remove('hidden');
+                priceList.classList.add('hidden');
+                searchBox.disabled = true;
+                displayMessage("El archivo no contiene datos de producto/precio válidos en el formato esperado.", 'error');
+                updatePrintButtonState(); 
+            }
+            
+            // 3. Activar la advertencia de recarga si hay precios
+            checkAndSetUnloadWarning();
+        }
+
+        // Listener para el input de archivo
+        excelFile.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            message.classList.add('hidden');
+            const reader = new FileReader();
+            reader.onload = async (e) => await processExcelData(e.target.result);
+            reader.onerror = () => displayMessage('Error al leer el archivo. Asegúrate de que no esté corrupto.', 'error');
+            reader.readAsArrayBuffer(file);
+        });
+        
+        // ====================================================================
+        // NUEVA LÓGICA DE ADVERTENCIA AL RECARGAR O SALIR
+        // ====================================================================
+
+        /**
+         * Verifica si hay datos cargados y activa/desactiva la advertencia de recarga.
+         */
+        function checkAndSetUnloadWarning() {
+            // Comprueba si hay tickets cargados (manuales o de Excel)
+            const hasData = allPriceCards.length > 0;
+
+            if (hasData) {
+                // Si hay datos, activa la función de advertencia al intentar cerrar o recargar
+                window.onbeforeunload = function(e) {
+                    // El mensaje aquí es ignorado por la mayoría de los navegadores por razones de seguridad, 
+                    // pero la presencia de un valor de retorno activa la ventana de confirmación.
+                    const confirmationMessage = "¡Compañero! Estás seguro de actualizar/cerrar la página? Se perderán todos los precios cargados del Excel y los tickets manuales. Por favor, cancela y usa F5 para la Tasa del Dólar si no quieres perder esta información.";
+                    (e || window.event).returnValue = confirmationMessage; 
+                    return confirmationMessage; // Para navegadores antiguos
+                };
+            } else {
+                // Si no hay datos, desactiva la función
+                window.onbeforeunload = null;
+            }
+        }
+        
+        // ====================================================================
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            updatePrintButtonState(); // Llama para inicializar el estado de los botones correctamente
+            priceList.classList.add('hidden');
+            initFeriaSelection(); // Inicia el proceso de selección de feria
+            checkAndSetUnloadWarning(); // Inicializa la advertencia (desactivada si no hay datos)
+        });
+        
+        // NUEVA FUNCIÓN: Listener para la tecla F5
+        document.addEventListener('keydown', function(event) {
+            // keyCode 116 corresponde a F5. También usamos event.key para modernidad.
+            if (event.key === 'F5' || event.keyCode === 116) {
+                // Al presionar F5, el navegador intentará recargar O navegar.
+                // Si hay datos cargados, el onbeforeunload se encargará de preguntar.
+                
+                // Si no hay datos, o si el usuario confirma la recarga, esto lo lleva a dollar.html
+                // Sin embargo, para que onbeforeunload funcione correctamente, NO debemos llamar a window.location.href aquí,
+                // sino dejar que el comportamiento por defecto de F5 o la confirmación del usuario actúe.
+                
+                // Puesto que el objetivo es ir a dollar.html al presionar F5, pero el navegador lo recarga, 
+                // vamos a forzar la navegación ÚNICAMENTE si NO hay datos, o si se maneja con una confirmación.
+                
+                if (allPriceCards.length === 0) {
+                    // Si no hay nada cargado, navega directamente sin preguntar.
+                    event.preventDefault(); // Detenemos la recarga por defecto
+                    window.location.href = 'dollar.html';
+                } else {
+                    // Si hay datos, dejamos que onbeforeunload se encargue de la advertencia. 
+                    // Si el usuario cancela, se queda aquí. Si acepta, recarga y va a dollar.html.
+                    // Esto es lo mejor que se puede hacer con las restricciones de seguridad modernas de los navegadores.
+                    // Alerta al usuario sobre la acción.
+                    displayMessage("Presionaste F5. Si recargas la página, se perderán los datos. ¡Para ir a la Tasa del Dólar sin perderlos, cancela y luego hazlo!", 'error');
+                }
+            }
+        });
+
+    </script>
+    
+</body>
+</html>

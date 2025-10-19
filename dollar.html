@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dólar Tickera | Fénix Ticker Cecosesola</title>
+    
+    <!-- Carga Tailwind CSS para estilos rápidos y responsivos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Carga Google Fonts: Inter con pesos gruesos para el ticket -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900;1000&display=swap" rel="stylesheet">
+    
+    <style>
+        /* * ESTILOS GENERALES Y MODO NOCTURNO 
+         */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Estilos para el modo nocturno */
+        body.dark-mode {
+            background-color: #1e293b; 
+            color: #f1f5f9; 
+        }
+        
+        body.dark-mode #app {
+            background-color: #334155; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        body.dark-mode header h1 { color: #93c5fd; }
+        body.dark-mode header p { color: #cbd5e1; }
+        body.dark-mode .bg-gray-50 { background-color: #475569; border-color: #64748b; }
+        body.dark-mode .text-gray-700 { color: #cbd5e1; }
+        body.dark-mode input { border-color: #64748b; background-color: #334155; color: #f1f5f9; }
+        body.dark-mode .price-card { background-color: #475569; border-color: #94a3b8 !important; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); }
+        body.dark-mode .price-card h3 { color: #f1f5f9; }
+        body.dark-mode .price-card .text-blue-600 { color: #93c5fd; }
+        body.dark-mode .price-card .text-gray-500 { color: #94a3b8; }
+        
+        /* Estilo específico del ticket (vista en pantalla) */
+        .price-card {
+            border: 2px dashed #4f46e5 !important; /* Borde punteado azul */
+        }
+        
+        /* Ocultar el checkbox (no usado en este diseño) */
+        .price-card .checkbox-container {
+            display: none !important;
+        }
+
+        /* Estilos para el modal */
+        .modal { background-color: rgba(0, 0, 0, 0.5); opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out; }
+        .modal-content { transform: translateY(-50px); transition: transform 0.3s ease-in-out; }
+        .modal.open { opacity: 1; pointer-events: auto; }
+        .modal.open .modal-content { transform: translateY(0); }
+        
+        /*
+         * ESTILOS ESPECÍFICOS PARA IMPRESIÓN (TICKET)
+         */
+        @media print {
+            /* Configuración de la página para formato de ticket ancho (210mm x 80mm) */
+            @page {
+                size: 210mm 80mm; 
+                /* AJUSTE DE MARGENES: Top: 6mm, Right: 35.5mm, Bottom: 0mm, Left: 0mm */
+                margin: 6mm 35.5mm 0mm 0mm !important; 
+                orientation: landscape; 
+            }
+            
+            body { 
+                padding: 0 !important; 
+                background-color: #ffffff !important; 
+                color: #000000 !important;
+                font-family: 'Inter', sans-serif !important;
+            }
+
+            /* Ocultar todos los controles de la interfaz */
+            .print-controls {
+                display: none !important; 
+            }
+
+            .printable-area {
+                margin: 0;
+                padding: 0;
+                display: block !important; 
+                width: 100%; 
+            }
+            
+            /* Estilos del ticket impreso: color negro, sin sombra/borde, tamaño fijo */
+            .price-card {
+                page-break-inside: avoid;
+                box-shadow: none !important;
+                height: 11rem !important; /* Altura forzada para el ticket */
+                width: 100%;
+                margin-bottom: 0.5rem; 
+                background-color: #ffffff !important; 
+                color: #000000 !important; 
+                page-break-after: always !important; 
+                border: none !important; 
+                padding: 0 !important; /* Quitar padding si es posible */
+            }
+            
+            /* Títulos del ticket en negro, extra-bold */
+            .price-card h3 { 
+                color: #000000 !important;
+                font-size: 1.8rem !important; 
+                font-weight: 1000 !important; /* Inter Black */
+                text-align: center !important; 
+            }
+            
+            /* Contenedor del precio: alinear al inicio (parte superior) */
+            .price-card > div:last-child {
+                color: #000000 !important;
+                font-weight: 1000 !important;
+                justify-content: center !important; 
+                padding-left: 0 !important; 
+            }
+            
+            /* Símbolo de moneda (Bs) */
+            .price-card .currency-symbol {
+                color: #000000 !important;
+                font-weight: 1000 !important;
+                font-size: 2rem !important; 
+                width: 2.5rem; 
+                text-align: right;
+                padding-top: 2rem !important; 
+            }
+
+            /* Valor de la tasa (lo más grande) */
+            .price-card .price-value {
+                color: #000000 !important;
+                font-size: 5rem !important; 
+                font-weight: 1000 !important; 
+                line-height: 1 !important; 
+            }
+            
+            /* Fecha y Handle */
+            .price-card .ticket-date,
+            .price-card .social-handle {
+                color: #000000 !important;
+                font-weight: 1000 !important; 
+            }
+            
+            .ticket-date { display: block !important; } 
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="app" class="max-w-4xl mx-auto bg-white shadow-xl rounded-xl p-6 md:p-10 relative transition-colors duration-300">
+        
+        <!-- Botón de Modo Nocturno (Posicionado en la esquina superior derecha) -->
+        <button id="themeToggleButton" 
+                class="print-controls absolute top-4 right-4 p-2 rounded-full text-gray-700 bg-gray-200 hover:bg-gray-300 dark-mode:text-blue-300 dark-mode:bg-slate-500 dark-mode:hover:bg-slate-400 transition-colors duration-300"
+                title="Alternar Modo Nocturno">
+            <svg id="sunIcon" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <svg id="moonIcon" class="h-6 w-6 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+        </button>
+        
+        <header class="text-center mb-8 print-controls">
+            <!-- CONTENEDOR FLEX PARA EL TÍTULO Y EL ÍCONO -->
+            <div class="flex items-center justify-center space-x-2">
+                
+                <!-- ESTE ENLACE AHORA APUNTA A precios.html para la navegación externa -->
+                <a href="precios.html" class="flex items-center space-x-2 group">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-500 group-hover:text-blue-700 transition" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                    <!-- TÍTULO DINÁMICO -->
+                    <h1 id="mainTitle" class="text-3xl font-extrabold text-blue-600 mb-2 transition-colors duration-300">Dólar Ticker</h1>
+                </a>
+                
+                <!-- NUEVO BOTÓN PARA ABRIR EL MODAL DE FERIA -->
+                <button onclick="document.getElementById('feriaSelectionModal').classList.add('open'); return false;" 
+                        title="Cambiar Feria"
+                        class="p-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors duration-300 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                </button>
+            </div>
+            <!-- FIN DEL CONTENEDOR FLEX -->
+
+            <p id="current-date-display" class="text-lg font-bold text-gray-700 mb-2 transition-colors duration-300"></p> 
+            <p class="text-gray-500 transition-colors duration-300 font-semibold italic">"Generación rápida de ticket de la tasa del día."</p>
+        </header>
+
+        <!-- Controles de Carga e Impresión -->
+        <div class="print-controls space-y-4 mb-8 p-6 border border-gray-200 rounded-xl bg-gray-50 transition-colors duration-300 shadow-lg">
+            
+            <h2 class="text-xl font-bold text-gray-800 dark-mode:text-gray-100 mb-4">1. Ingrese la Tasa del Dólar (VES)</h2>
+            
+            <form id="dollarEntryForm" onsubmit="event.preventDefault(); generateDollarTicket()">
+                <div class="mb-4">
+                    <label for="dollarRate" class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-1">
+                        Tasa Bolívares (VES) por 1 USD
+                    </label>
+                    <input type="number" step="0.0001" id="dollarRate" required autofocus
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg text-2xl font-bold text-center 
+                                     focus:ring-blue-500 focus:border-blue-500 dark-mode:border-slate-500 dark-mode:bg-slate-600 dark-mode:text-white"
+                            placeholder="Ej: 36.50" />
+                </div>
+                
+                <p id="message" class="text-sm text-red-500 hidden mt-2"></p>
+                
+                <!-- BOTÓN DE GENERACIÓN Y IMPRESIÓN -->
+                <button type="submit"
+                        class="w-full mt-4 px-6 py-3 bg-blue-600 text-white font-extrabold rounded-lg shadow-xl 
+                                 hover:bg-blue-700 transition duration-150 transform hover:scale-[1.01] flex items-center justify-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M5 4V2a2 2 0 012-2h6a2 2 0 012 2v2h2a2 2 0 012 2v5a2 2 0 01-2 2h-2v4a2 2 0 01-2 2H7a2 2 0 01-2-2v-4H3a2 2 0 01-2-2V6a2 2 0 012-2h2zm10 2H5v3h10V6z" />
+                    </svg>
+                    2. Generar e Imprimir Tasa del Dólar
+                </button>
+            </form>
+        </div>
+
+        <!-- Área de Resultados y Vista Previa de Impresión (Solo 1 ticket) -->
+        <div id="priceList" class="printable-area flex justify-center p-4">
+            <!-- Aquí se insertará el ticket generado -->
+        </div>
+        
+        <p id="placeholder" class="text-center text-gray-400 py-4 dark-mode:text-gray-400 print-controls">
+            Ingrese una tasa para ver la vista previa del ticket.
+        </p>
+
+        <!-- SECCIÓN DE CRÉDITOS / PIE DE PÁGINA -->
+        <footer class="project-footer text-center mt-12 pt-6 border-t border-gray-200 dark-mode:border-slate-600 print-controls">
+            <p class="text-lg font-semibold text-gray-700 dark-mode:text-gray-300">Fénix Ticker</p>
+            <p class="text-sm text-gray-500 dark-mode:text-gray-400 mt-0.5 italic">
+                Simboliza el resurgimiento y la creación a partir de la dificultad.
+            </p>
+        </footer>
+        <!-- FIN SECCIÓN DE CRÉDITOS -->
+    </div>
+
+    <!-- Modal para Selección de Feria -->
+    <div id="feriaSelectionModal" class="modal fixed inset-0 flex items-center justify-center opacity-0 pointer-events-none z-50">
+        <div class="modal-content bg-white dark-mode:bg-slate-700 p-8 rounded-xl shadow-2xl w-full max-w-2xl transform transition duration-300 ease-in-out">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 dark-mode:text-gray-100 text-center">Seleccione la Feria</h2>
+            <p class="text-gray-600 dark-mode:text-gray-300 mb-6 text-center">Esta selección aparecerá en el ticket impreso.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <button type="button" onclick="selectFeria('centro')"
+                        class="px-4 py-8 bg-blue-500 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-600 transition duration-150 text-xl text-center transform hover:scale-105">
+                    Feria del Centro
+                </button>
+                <button type="button" onclick="selectFeria('este')"
+                        class="px-4 py-8 bg-green-500 text-white font-semibold rounded-lg shadow-lg hover:bg-green-600 transition duration-150 text-xl text-center transform hover:scale-105">
+                    Feria del Este
+                </button>
+                <button type="button" onclick="selectFeria('ruiz')"
+                        class="px-4 py-8 bg-yellow-500 text-white font-semibold rounded-lg shadow-lg hover:bg-yellow-600 transition duration-150 text-xl text-center transform hover:scale-105">
+                    Feria de Ruiz Pineda
+                </button>
+            </div>
+            <p class="text-xs text-gray-400 mt-6 text-center">La selección se guarda localmente en su navegador.</p>
+        </div>
+    </div>
+    
+    <script>
+        const dollarRateInput = document.getElementById('dollarRate');
+        const priceList = document.getElementById('priceList');
+        const message = document.getElementById('message');
+        const placeholder = document.getElementById('placeholder');
+        const currentDateDisplay = document.getElementById('current-date-display');
+        const mainTitle = document.getElementById('mainTitle'); 
+        const themeToggleButton = document.getElementById('themeToggleButton');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+        const feriaSelectionModal = document.getElementById('feriaSelectionModal');
+
+        // --- Configuración de Feria ---
+        const FERIAS = {
+            'centro': { name: 'Feria del Centro', handleSuffix: ' | FERIA DEL CENTRO' },
+            'este': { name: 'Feria del Este', handleSuffix: ' | FERIA DEL ESTE' },
+            'ruiz': { name: 'Feria de Ruiz Pineda', handleSuffix: ' | FERIA DE RUIZ PINEDA' }
+        };
+        const DEFAULT_FERIA_ID = 'este';
+        const BASE_SOCIAL_HANDLE = "@ <strong> 🅾redcecosesola";
+        
+        let currentFeria = null; 
+        
+        // --- Lógica de Feria ---
+
+        /** Inicializa la selección de la feria y abre el modal si no hay selección guardada. */
+        function initFeriaSelection() {
+            const savedFeriaId = localStorage.getItem('feriaSelection');
+            
+            if (savedFeriaId && FERIAS[savedFeriaId]) {
+                currentFeria = FERIAS[savedFeriaId];
+                feriaSelectionModal.classList.remove('open');
+            } else {
+                currentFeria = FERIAS[DEFAULT_FERIA_ID]; 
+                // Asegurarse de que el modal se abre por defecto
+                // Lo comentamos para que no abra automáticamente y moleste la navegación
+                // setTimeout(() => feriaSelectionModal.classList.add('open'), 100); 
+            }
+            updateFeriaDisplay();
+        }
+        
+        /** Guarda la feria seleccionada y actualiza la vista. */
+        function selectFeria(feriaId) {
+            if (FERIAS[feriaId]) {
+                currentFeria = FERIAS[feriaId];
+                localStorage.setItem('feriaSelection', feriaId);
+                updateFeriaDisplay();
+                feriaSelectionModal.classList.remove('open');
+                displayMessage(`Feria actualizada a "${currentFeria.name}".`, 'info');
+                // Re-genera el ticket si hay un valor ingresado
+                if (dollarRateInput.value) generateDollarTicket(false); 
+            }
+        }
+        window.selectFeria = selectFeria; // Exportar para uso en HTML
+
+        /** Actualiza el título principal con el nombre de la feria. */
+        function updateFeriaDisplay() {
+            if (currentFeria) {
+                mainTitle.textContent = `Dólar Ticker | ${currentFeria.name}`;
+            } else {
+                mainTitle.textContent = `Dólar Ticker`;
+            }
+        }
+
+
+        // --- Lógica de Modo Nocturno ---
+
+        function toggleTheme() {
+            const isDarkMode = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+            updateThemeIcons(isDarkMode);
+        }
+
+        function updateThemeIcons(isDarkMode) {
+            if (isDarkMode) {
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+        }
+        
+        function applySavedTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            let isDarkMode = false;
+            if (savedTheme === 'dark') {
+                isDarkMode = true;
+            } else if (savedTheme === null && prefersDark) {
+                isDarkMode = true;
+            }
+
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
+            updateThemeIcons(isDarkMode);
+        }
+        
+        applySavedTheme();
+        themeToggleButton.addEventListener('click', toggleTheme);
+
+
+        // --- Utilidades de Fecha y Mensajes ---
+
+        /** Obtiene la fecha actual en formato dd/mm/aaaa. */
+        function getCurrentDateFormatted(includePrefix = true) {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0'); // Meses son 0-indexados
+            const year = now.getFullYear();
+            const dateStr = `${day}/${month}/${year}`;
+            return includePrefix ? `Fecha del Dia: ${dateStr}` : dateStr;
+        }
+
+        /** Muestra un mensaje de estado o error. */
+        function displayMessage(text, type = 'error') {
+            message.textContent = text;
+            message.className = `text-sm mt-2 p-3 rounded-lg ${type === 'error' ? 'text-red-700 bg-red-100 dark-mode:bg-red-900 dark-mode:text-red-300' : 'text-blue-700 bg-blue-100 dark-mode:bg-blue-900 dark-mode:text-blue-300'}`;
+            message.classList.remove('hidden');
+        }
+
+
+        // --- Lógica del Ticket de Dólar ---
+
+        /** Genera el HTML para la tarjeta del dólar. */
+        function createDollarCardHtml(formattedRate) {
+            const ticketId = "dollar-ticket-01";
+            const todayDate = getCurrentDateFormatted(false); 
+            
+            // Construir el handle social
+            const socialHandleText = `${BASE_SOCIAL_HANDLE}${currentFeria ? currentFeria.handleSuffix : ''}`;
+
+            return `
+                <div id="${ticketId}" 
+                    class="price-card rounded-lg p-4 bg-white shadow-md hover:shadow-lg transition-all duration-200 flex flex-col justify-between h-44 relative w-full max-w-sm mx-auto">
+                    
+                    <div class="text-center mt-2">
+                        <!-- FECHA ACTUAL -->
+                        <p class="ticket-date text-xs font-bold text-gray-900 mb-0.5">${todayDate}</p> 
+                        <!-- HANDLE SOCIAL Y SUFIJO DE FERIA -->
+                        <p class="social-handle text-xs font-medium text-gray-500">${socialHandleText}</p>
+                        
+                        <!-- TÍTULO FIJO DEL PRODUCTO -->
+                        <h3 class="text-2xl font-black text-gray-900 uppercase tracking-tight leading-tight">Tasa del Dólar</h3>
+                    </div>
+                    
+                    <!-- Precio: El precio grande para la tasa -->
+                    <div class="text-4xl font-extrabold text-blue-600 w-full flex items-end justify-center pb-1">
+                        <!-- Símbolo de Bolívares (Bs) a la izquierda y el valor -->
+                        <span class="currency-symbol text-xl font-bold mr-1 text-blue-600">Bs</span>
+                        <span class="price-value text-blue-600">${formattedRate}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        /** Genera el ticket de dólar en la vista y lo imprime. */
+        function generateDollarTicket(shouldPrint = true) {
+            const rateStr = dollarRateInput.value.trim();
+            
+            if (!rateStr) {
+                displayMessage("Por favor, ingrese un valor para la tasa del dólar.", 'error');
+                priceList.innerHTML = '';
+                placeholder.classList.remove('hidden');
+                return;
+            }
+            
+            const rate = parseFloat(rateStr);
+            if (isNaN(rate) || rate <= 0) {
+                displayMessage("La tasa debe ser un número válido y positivo.", 'error');
+                priceList.innerHTML = '';
+                placeholder.classList.remove('hidden');
+                return;
+            }
+            
+            message.classList.add('hidden');
+            placeholder.classList.add('hidden');
+
+            // Lógica para contar decimales ingresados y usar ese número exacto.
+            let decimalPlaces = 0;
+            const decimalIndex = rateStr.indexOf('.');
+
+            if (decimalIndex !== -1) {
+                decimalPlaces = rateStr.length - decimalIndex - 1;
+            }
+
+            // Formatear la tasa usando 'es-ES' para el separador decimal (coma)
+            const formattedRate = rate.toLocaleString('es-ES', { 
+                minimumFractionDigits: decimalPlaces,
+                maximumFractionDigits: decimalPlaces 
+            });
+
+            // 1. Renderizar el ticket
+            const ticketId = 'dollar-ticket-01';
+            priceList.innerHTML = createDollarCardHtml(formattedRate);
+
+            // 2. Disparar impresión si es necesario
+            if (shouldPrint) {
+                printSelectedTicket(ticketId);
+                displayMessage(`Ticket de Tasa del Dólar (${formattedRate} Bs) generado e impreso.`, 'info');
+            } else {
+                displayMessage(`Vista previa de la Tasa del Dólar (${formattedRate} Bs) generada.`, 'info');
+            }
+            
+            dollarRateInput.focus();
+        }
+        window.generateDollarTicket = generateDollarTicket;
+        
+        /**
+         * FUNCIÓN DE IMPRESIÓN DE TICKET INDIVIDUAL
+         */
+        function printSelectedTicket(elementId) {
+            const ticketElement = document.getElementById(elementId);
+            if (!ticketElement) {
+                console.error("Elemento no encontrado para imprimir:", elementId);
+                return;
+            }
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write('<html><head><title>Imprimir Tasa del Dólar</title>');
+            printWindow.document.write('<script src="https://cdn.tailwindcss.com"><\/script>');
+            printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900;1000&display=swap" rel="stylesheet">');
+            
+            // Inyección de estilos CSS críticos para la impresión del ticket
+            printWindow.document.write(`
+            <style>
+                @page { 
+                    size: 210mm 80mm; 
+                    margin: 6mm 35.5mm 0mm 0mm !important; 
+                    orientation: landscape; 
+                }
+                
+                body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: #fff; color: #000; }
+                
+                .price-card { 
+                    box-shadow: none !important;
+                    page-break-inside: avoid;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    justify-content: space-between !important;
+                    height: 11rem !important; 
+                    width: 100%;
+                    background-color: #ffffff !important;
+                    color: #000000 !important;
+                    page-break-after: always !important;
+                    border: none !important;
+                }
+
+                .price-card h3 { 
+                    color: #000000 !important; 
+                    font-size: 1.8rem !important; 
+                    font-weight: 1000 !important; 
+                    line-height: 1.1 !important; 
+                    text-align: center !important; 
+                }
+                
+                .price-card > div:last-child {
+                    color: #000000 !important;
+                    font-weight: 1000 !important; 
+                    justify-content: center !important; 
+                    padding-left: 0 !important; 
+                }
+                
+                .price-card .currency-symbol {
+                    color: #000000 !important;
+                    font-weight: 1000 !important; 
+                    font-size: 2rem !important; 
+                    width: 2.5rem; 
+                    text-align: right;
+                    padding-top: 2rem !important; 
+                }
+                
+                .price-card .price-value {
+                    font-size: 5rem !important; 
+                    font-weight: 1000 !important; 
+                    color: #000000 !important;
+                    line-height: 1 !important;
+                }
+                
+                .print-controls { display: none !important; }
+                
+                .price-card .ticket-date,
+                .price-card .social-handle {
+                    color: #000000 !important;
+                    font-weight: 1000 !important; 
+                }
+                
+                .ticket-date { display: block !important; } 
+            </style>`);
+            
+            printWindow.document.write('</head><body>');
+            printWindow.document.write(ticketElement.outerHTML);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close(); 
+
+            printWindow.onload = function() {
+                // Pequeño retardo para asegurar que Tailwind y las fuentes carguen
+                setTimeout(() => { 
+                    printWindow.print();
+                    printWindow.close(); // Cerrar la ventana después de imprimir (o intento)
+                }, 500); 
+            };
+            
+        }
+
+        // --- Inicialización ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initFeriaSelection();
+            currentDateDisplay.textContent = getCurrentDateFormatted();
+            
+            // Actualizar la vista previa automáticamente al cambiar el valor
+            dollarRateInput.addEventListener('input', () => generateDollarTicket(false));
+            
+            // Generar la vista previa inicial si hay un valor precargado
+            if (dollarRateInput.value) {
+                generateDollarTicket(false);
+            }
+        });
+    </script>
+    
+</body>
+</html>
