@@ -13,6 +13,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900;1000&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <!DOCTYPE html>
+<html>
+</head>
+<body>
+    <marquee direction="right" behavior="scroll" scrollamount="6">
+        <h1>☆═━┈¡Bienvenido Compañero!┈━═☆</h1>
+    </marquee>
+</body>
+</html>
+
     <style>
         /* Definiciones de estilo específicas para impresión */
         @media print {
@@ -485,7 +495,7 @@
                 <div class="p-4 bg-pink-50 dark-mode:bg-pink-900/50 rounded-lg shadow-md">
                     <h3 class="font-bold text-lg text-pink-700 dark-mode:text-pink-300 mb-2">5. Tasa del Dólar (Acceso Rápido)</h3>
                     <p class="text-gray-700 dark-mode:text-gray-300">
-                        Para acceder a la página de generación de tickets de la **Tasa del Dólar** (si está disponible), simplemente presione la tecla **F5** en su teclado. Esto lo llevará a la página `dollar.html` para gestionar e imprimir esos tickets.
+                        Para acceder a la página de generación de tickets de la **Tasa del Dólar** (si está disponible), simplemente presione la tecla **F6** en su teclado. Esto lo llevará a la página `dollar.html` para gestionar e imprimir esos tickets.
                     </p>
                 </div>
             </div>
@@ -1429,7 +1439,7 @@
                 window.onbeforeunload = function(e) {
                     // El mensaje aquí es ignorado por la mayoría de los navegadores por razones de seguridad, 
                     // pero la presencia de un valor de retorno activa la ventana de confirmación.
-                    const confirmationMessage = "¡Compañero! Estás seguro de actualizar/cerrar la página? Se perderán todos los precios cargados del Excel y los tickets manuales. Por favor, cancela y usa F5 para la Tasa del Dólar si no quieres perder esta información.";
+                    const confirmationMessage = "¡Compañero! Estás seguro de actualizar/cerrar la página? Se perderán todos los precios cargados del Excel y los tickets manuales. Por favor, cancela y usa F6 para la Tasa del Dólar si no quieres perder esta información.";
                     (e || window.event).returnValue = confirmationMessage; 
                     return confirmationMessage; // Para navegadores antiguos
                 };
@@ -1449,18 +1459,18 @@
             checkAndSetUnloadWarning(); // Inicializa la advertencia (desactivada si no hay datos)
         });
         
-        // NUEVA FUNCIÓN: Listener para la tecla F5
+        // NUEVA FUNCIÓN: Listener para la tecla F6
         document.addEventListener('keydown', function(event) {
-            // keyCode 116 corresponde a F5. También usamos event.key para modernidad.
-            if (event.key === 'F5' || event.keyCode === 116) {
-                // Al presionar F5, el navegador intentará recargar O navegar.
+            // keyCode 116 corresponde a F6. También usamos event.key para modernidad.
+            if (event.key === 'F6' || event.keyCode === 116) {
+                // Al presionar F6, el navegador intentará recargar O navegar.
                 // Si hay datos cargados, el onbeforeunload se encargará de preguntar.
                 
                 // Si no hay datos, o si el usuario confirma la recarga, esto lo lleva a dollar.html
                 // Sin embargo, para que onbeforeunload funcione correctamente, NO debemos llamar a window.location.href aquí,
-                // sino dejar que el comportamiento por defecto de F5 o la confirmación del usuario actúe.
+                // sino dejar que el comportamiento por defecto de F6 o la confirmación del usuario actúe.
                 
-                // Puesto que el objetivo es ir a dollar.html al presionar F5, pero el navegador lo recarga, 
+                // Puesto que el objetivo es ir a dollar.html al presionar F6, pero el navegador lo recarga, 
                 // vamos a forzar la navegación ÚNICAMENTE si NO hay datos, o si se maneja con una confirmación.
                 
                 if (allPriceCards.length === 0) {
@@ -1472,7 +1482,7 @@
                     // Si el usuario cancela, se queda aquí. Si acepta, recarga y va a dollar.html.
                     // Esto es lo mejor que se puede hacer con las restricciones de seguridad modernas de los navegadores.
                     // Alerta al usuario sobre la acción.
-                    displayMessage("Presionaste F5. Si recargas la página, se perderán los datos. ¡Para ir a la Tasa del Dólar sin perderlos, cancela y luego hazlo!", 'error');
+                    displayMessage("Presionaste F6. Si recargas la página, se perderán los datos. ¡Para ir a la Tasa del Dólar sin perderlos, cancela y luego hazlo!", 'error');
                 }
             }
         });
