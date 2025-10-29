@@ -58,6 +58,124 @@
         .modal-content { transform: translateY(-50px); transition: transform 0.3s ease-in-out; }
         .modal.open { opacity: 1; pointer-events: auto; }
         .modal.open .modal-content { transform: translateY(0); }
+
+        /* ---------------------------------------------------- */
+        /* * ESTILOS DEL LOGO ANIMADO CECOSESOLA */
+        /* ---------------------------------------------------- */
+        .logo-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem auto; /* Centrar y añadir margen inferior */
+        }
+
+        #dynamic-figures {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .figure {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: scale(0.5);
+            animation-fill-mode: forwards;
+            transform-origin: center;
+        }
+
+        @keyframes appear-and-join {
+            0% {
+                opacity: 0;
+                transform: translate(var(--initial-x), var(--initial-y)) scale(0.5) rotate(0deg);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(var(--initial-x), var(--initial-y)) scale(1.1) rotate(0deg);
+            }
+            100% {
+                opacity: 1;
+                transform: rotate(var(--final-rotation)) translate(var(--final-translate-x), var(--final-translate-y)) scale(1) rotate(calc(-1 * var(--final-rotation)));
+            }
+        }
+
+        /* Posicionamiento y colores de cada figura con sus variables CSS para la animación */
+        .figure:nth-child(1) {
+            background-color: #004d00;
+            --initial-x: -250px; --initial-y: -250px; 
+            --final-rotation: 0deg; --final-translate-x: 0px; --final-translate-y: -100px;
+            animation: appear-and-join 2s ease-out 0.2s forwards;
+            top: 50%; left: 50%; margin-left: -25px; margin-top: -25px;
+        }
+        .figure:nth-child(2) {
+            background-color: #ff6600;
+            --initial-x: 250px; --initial-y: -250px; 
+            --final-rotation: 60deg; --final-translate-x: 0px; --final-translate-y: -100px;
+            animation: appear-and-join 2s ease-out 0.4s forwards;
+            top: 50%; left: 50%; margin-left: -25px; margin-top: -25px;
+        }
+        .figure:nth-child(3) {
+            background-color: #ffaa00;
+            --initial-x: 250px; --initial-y: 250px; 
+            --final-rotation: 120deg; --final-translate-x: 0px; --final-translate-y: -100px;
+            animation: appear-and-join 2s ease-out 0.6s forwards;
+            top: 50%; left: 50%; margin-left: -25px; margin-top: -25px;
+        }
+        .figure:nth-child(4) {
+            background-color: #004d00;
+            --initial-x: -250px; --initial-y: 250px; 
+            --final-rotation: 180deg; --final-translate-x: 0px; --final-translate-y: -100px;
+            animation: appear-and-join 2s ease-out 0.8s forwards;
+            top: 50%; left: 50%; margin-left: -25px; margin-top: -25px;
+        }
+        .figure:nth-child(5) {
+            background-color: #ff6600;
+            --initial-x: 0px; --initial-y: -300px; 
+            --final-rotation: 240deg; --final-translate-x: 0px; --final-translate-y: -100px;
+            animation: appear-and-join 2s ease-out 1.0s forwards;
+            top: 50%; left: 50%; margin-left: -25px; margin-top: -25px;
+        }
+        .figure:nth-child(6) {
+            background-color: #ffaa00;
+            --initial-x: 0px; --initial-y: 300px; 
+            --final-rotation: 300deg; --final-translate-x: 0px; --final-translate-y: -100px;
+            animation: appear-and-join 2s ease-out 1.2s forwards;
+            top: 50%; left: 50%; margin-left: -25px; margin-top: -25px;
+        }
+
+        .center-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+        }
+
+        .cecosesola-text {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #004d00;
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+
+        .slogan {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #ff6600;
+        }
+        
+        /* Adaptación de Modo Nocturno para el Logo */
+        body.dark-mode .cecosesola-text { color: #86efac; } /* Verde claro */
+        body.dark-mode .slogan { color: #fcd34d; } /* Naranja/Amarillo claro */
+        /* ---------------------------------------------------- */
         
         /*
          * ESTILOS ESPECÍFICOS PARA IMPRESIÓN (TICKET)
@@ -165,6 +283,27 @@
             </svg>
         </button>
         
+        <!-- LOGO ANIMADO CECOSESOLA (print-controls para ocultar al imprimir) -->
+        <div class="logo-container print-controls">
+            <!-- Contenedor para las figuras dinámicas -->
+            <div id="dynamic-figures">
+                <!-- Cada figura representa una "persona" -->
+                <div class="figure"></div>
+                <div class="figure"></div>
+                <div class="figure"></div>
+                <div class="figure"></div>
+                <div class="figure"></div>
+                <div class="figure"></div>
+            </div>
+            <!-- Contenido de texto central -->
+            <div class="center-content">
+                <div class="cecosesola-text">CECOSESOLA</div>
+                <div class="slogan text-xs sm:text-sm md:text-base">Construyendo confianza</div>
+                <div class="slogan text-xs sm:text-sm md:text-base">en la diversidad</div>
+            </div>
+        </div>
+        <!-- FIN LOGO ANIMADO CECOSESOLA -->
+
         <header class="text-center mb-8 print-controls">
             <!-- CONTENEDOR FLEX PARA EL TÍTULO Y EL ÍCONO -->
             <div class="flex items-center justify-center space-x-2">
